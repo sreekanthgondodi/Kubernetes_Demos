@@ -1,0 +1,36 @@
+# ******************************************** Scenario: Kubernetes Rolloing Update ****************************************************
+There is a production deployment planned for next week. The Nautilus DevOps team wants to test the deployment update and rollback on Dev environment first so that they can identify the risks in advance. Below you can find more details about the plan they want to execute.
+
+
+Create a namespace datacenter. Create a deployment called httpd-deploy under this new namespace, It should have one container called httpd, use httpd:2.4.27 image and 3 replicas. The deployment should use RollingUpdate strategy with maxSurge=1, and maxUnavailable=2.
+
+Next upgrade the deployment to version httpd:2.4.43 using a rolling update.
+
+Finally, once all pods are updated undo the update and roll back to the previous/original version.
+
+Note: The kubectl utility on jump_host has been configured to work with the kubernetes cluster.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+Solution:
+
+1. Create Namespace
+kubectl create namespace datacenter
+
+2. Create deployment as per the question
+kubectl create deployment httpd-deploy --image httpd:2.4.27 --replicas=3 --namespace=datacenter 
+
+3. Edit the deployment and set the RollingUpdate strategy parameters (maxSurge=1 and maxUnavailable=2)
+kubectl edit deployment/httpd-deploy
+
+4. Update the image to httpd:2.4.43 and record the transaction
+kubectl set image deployment/httpd-deploy httpd=httpd:2.4.43 --namespace=datacenter --record=true
+
+5. Check the rolling update version history
+kubectl rollout history deployment/httpd-deploy --namespace=datacenter
+
+6. Revert back to previous version
+kubectl rollout undo deployment/httpd-deploy --namespace=datacenter
+
+7. Check the deployment image version
+kubectl describe deployment/httpd-deploy --namespace=datacenter
+
