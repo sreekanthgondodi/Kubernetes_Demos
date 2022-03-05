@@ -1,0 +1,28 @@
+# ******************************************* Scenario: Fix Database issue in K8s Application ***************************************************
+
+# We deployed a WordPress website on Kubernetes cluster last week and it had been working fine. This morning one of the team members made some changes somewhere which caused some issues, and the application stopped working. Please look into the issue and fix it:
+
+# FYI, we are seeing database connection error, please identify the root cause and fix the same. Please do not try to delete/modify any other existing components like deployment name, service name, labels etc, also do not hard code any DB details in the application configuration. Once fixed, you can access the WordPress website using the WP Website option, on the top bar.
+
+# Note: The kubectl utility on jump_host has been configured to work with the kubernetes cluster.
+
+# -------------------------------------------------------------------------------------------------------------------------------------------
+Solution:
+1. Check existing running pods 
+kubectl get all
+
+2. Go through the logs of the container to find the issue
+kubectl logs <pod-name> -c <container-name>
+
+3. troubleshoot the typo in the container configuration 
+kubectl exec -it <pod-name> -c <container-name> -- bash
+
+4. Replace the error content in the file
+sed -i  -e "s/MYSQL_PASSWORD/'MYSQL_PASSWORD'/g" wp-config.php
+sed -i  -e "s/'localhost/'MYSQL_HOST'/g" wp-config.php
+
+5. Restart apache server
+service apache2 start
+service apache2 status
+
+6. Make sure pod is running state and click on WP tab to open the application
