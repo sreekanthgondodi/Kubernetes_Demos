@@ -1,0 +1,95 @@
+# ******************************************** Scenario: Deploy Jekyll App on Kubernetes ******************************************************
+
+# The Nautilus development team had a discussion with the DevOps team and they want to deploy a Jekyll app on Kubernetes cluster. They have already shared details with the DevOps team, please find more details below:
+
+# Create a namespace jekyll-namespace-nautilus for jekyll.
+
+# PersistentVolume is already created on jump_host.
+
+# Create a PersistentVolumeClaim which should be named jekyll-site-nautilus under the same namespace. accessModes should be ReadWriteMany, request 1Gi storage.
+
+# Create a pod named jekyll-pod-nautilus for jekyll. Init container should be named as jekyll-init-nautilus, image should be kodekloud/jekyll, use command as [ "jekyll", "new", "/site" ]. Its image pull policy should be IfNotPresent, volumeMount name should be site and its mountPath should be /site. The main container should be named as jekyll-container-nautilus, its image should be kodekloud/jekyll-serve, volumeMount name should be site and its mountPath should be /site. Volume name should be site and persistent volume claim's claim name should be jekyll-site-nautilus
+
+# Create a service for jekyll which should be named jekyll-service-nautilus under the same namespace. Port should be 8080, protocol should be TCP, its targetPort should be 4000 and nodePort should be 31181. Its type should be NodePort and loadbalancer status should be {}.
+
+# You can use any labels as per your choice.
+
+# Note: The kubectl on jump_host has been configured to work with the kubernetes cluster.
+
+# ----------------------------------------------------------------------------------------------------------------------------------------
+# Solution:
+
+#1. create namespace
+
+# kubectl create namespace jekyll-namespace-nautilus
+
+# 2. create pvc
+
+# vi /home/thor/jekyll-site-xfusion-pvc.yml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jekyll-site-nautilus
+  namespace: jekyll-namespace-nautilus
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:	
+      storage: 1Gi
+	  
+---
+
+#3. Create pod
+#vi /home/thor/jekyll-pod-xfusion-pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jekyll-pod-nautilus
+  namespace: jekyll-namespace-nautilus
+  labels:
+	app: jekyll-app
+spec:
+  volumes:
+  - name: site
+    persistentVolumeClaim:
+       claimName: jekyll-site-nautilus
+  initContainers:
+  - name: jekyll-init-nautilus
+    image: kodekloud/jekyll
+	imagePullPolicy: IfNotPresent
+    command: [ "jekyll", "new", "/site" ]
+    volumeMounts:
+    - name: site
+      mountPath: /site	   
+  containers:
+  - name: jekyll-container-nautilus
+    image: kodekloud/jekyll-serve
+    volumeMounts:
+    - name: site
+      mountPath: /site
+  
+---  
+	
+# 4. create service
+
+# vi /home/thor/jekyll-service-xfusion-service.yml	
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: jekyll-service-nautilus
+  namespace: jekyll-namespace-nautilus
+spec:
+  type: NodePort
+  selector:
+    app: jekyll-app
+  ports:
+    - protocol: TCP
+	  port: 8080
+      targetPort: 4000
+      nodePort: 31181
+status:
+  loadBalancer: {}	  
