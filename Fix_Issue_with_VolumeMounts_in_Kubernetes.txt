@@ -1,0 +1,32 @@
+# ********************************* Scenario: Fix Issue with VolumeMounts in Kubernetes ***************************************************
+
+We deployed a Nginx and PHPFPM based application on Kubernetes cluster last week and it had been working fine. This morning one of the team members made a change somewhere which caused some issues, and the application stopped working. Please look into the issue and fix it:
+
+
+The pod name is nginx-phpfpm and configmap name is nginx-config, Nginx is running on port 8099. Figure out the issues and fix them.
+
+Once you think issue is fixed copy /tmp/index.php from jump host to nginx-container under nginx document root and try to curl the nginx URL from nginx-container itself, you should be able to run the php page you copied. This step isn't mandatory but it will be helpful to test the setup.
+
+Note: The kubectl utility on jump_host has been configured to work with the kubernetes cluster.
+
+------------------------------------------------------------------------------------------------------------------------------------------
+Solution:
+
+1. Check the mount path that is configured in configMap and Pod. If the mountPath is not in sync then change it.
+
+kubectl get configmap nginx-config -o yaml >> /home/thor/nginx-config.yml
+kubectl get pod nginx-phpfpm -o yaml >> /home/thor/nginx-phpfpm.yml
+
+2. Once changed in Pod, delete the pod and create new pod using the yaml file
+
+kubectl apply -f /home/thor/nginx-phpfpm.yml
+
+3. copy the index.php file to container
+
+kubectl cp /tmp/index.php nginx-phpfpm:/var/www/html
+
+4. Test the changes
+
+kubectl exec -i -t nginx-phpfpm --container nginx-container -- /bin/bash
+curl localhost:8099
+
